@@ -1,0 +1,35 @@
+{
+  "name": "hal-serializer",
+  "version": "0.1.0",
+  "description": "Framework agnostic HAL serializer.",
+  "main": "index.js",
+  "scripts": {
+    "lint": "./node_modules/.bin/eslint .",
+    "test": "./node_modules/.bin/istanbul cover --print both ./node_modules/mocha/bin/_mocha -- -R spec ./test/**/*.js",
+    "coveralls": "cat ./coverage/lcov.info | node ./node_modules/coveralls/bin/coveralls.js"
+  },
+  "keywords": [
+    "json",
+    "hal",
+    "Hypertext Application Language",
+    "serializer"
+  ],
+  "author": "Kévin Danielo",
+  "repository": "danivek/hal-serializer",
+  "license": "MIT",
+  "engines": {
+    "node": ">= 4.0.0"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "coveralls": "^2.11.8",
+    "eslint": "^1.10.3",
+    "eslint-config-airbnb": "^5.0.0",
+    "istanbul": "^0.4.2",
+    "mocha": "^2.4.5"
+  },
+  "dependencies": {
+    "joi": "^8.0.3",
+    "lodash": "^4.5.1"
+  }
+}
