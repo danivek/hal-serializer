@@ -77,9 +77,11 @@ var Serializer = new HALSerializer();
 // Register 'article' type
 Serializer.register('article', {
   blacklist: ['updated'], // An array of blacklisted attributes. Default = []
-  links: { // An object that describe links. Default = {}
-    self: function(data) { // Can be a function or a string value ex: { self: '/articles/1'}
-      return '/articles/' + data.id;
+  links: {
+    self: function(data) {
+      return {
+        href: '/articles/' + data.id
+      };
     }
   },
   embedded: { // An object defining some embedded resources.
