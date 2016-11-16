@@ -10,19 +10,19 @@ describe('Examples', function() {
   var Serializer = new HALSerializer();
   Serializer.register('article', {
     blacklist: ['updated'],
-    links: {
-      self: function(data) {
-        return {
+    links: function(data) {
+      return {
+        self: {
           href: '/articles/' + data.id
-        };
+        }
       }
     },
     embedded: {
       author: {
         type: 'people',
-        links: {
-          href: function(data) {
-            return '/peoples/' + data.id;
+        links: function(data) {
+          return {
+            href: '/peoples/' + data.id
           }
         }
       },
@@ -37,9 +37,9 @@ describe('Examples', function() {
         schema: 'only-body'
       }
     },
-    topLevelMeta: {
-      count: function(extraOptions) {
-        return extraOptions.count;
+    topLevelMeta: function(extraOptions) {
+      return {
+        count: extraOptions.count
       }
     },
     topLevelLinks: {
@@ -49,11 +49,11 @@ describe('Examples', function() {
     }
   });
   Serializer.register('people', {
-    links: {
-      self: function(data) {
-        return {
+    links: function(data) {
+      return {
+        self: {
           href: '/peoples/' + data.id
-        };
+        }
       }
     }
   });

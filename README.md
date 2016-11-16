@@ -21,16 +21,16 @@ Serializer.register(type, options);
 ```
 **Available options :**
 
-- *blacklist* (optional): An array of blacklisted attributes. Default = [].
-- *whitelist* (optional): An array of whitelisted attributes. Default = [].
-- *links* (optional): An object that describes the links inside data. Values can be string or function (see examples below).
-- *topLevelMeta* (optional): An object that describes the top-level meta. Values can be string or function (see examples below).
-- *topLevelLinks* (optional): An object that describes the top-level links. Values can be string or function (see examples below).
-- *embedded* (optional): An object defining some embedded resources
-    - embedded: The property in data to use as an embedded resource
-        - *type*: The type to use for serializing the embedded resource (type need to be register)
-        - *schema* (optional): A custom schema for serializing the embedded resource. If no schema define, it use the default one.
-        - *links* (optional): An object that describes the links for the embedded resource. Values can be string or function (see examples below).
+- **blacklist** (optional): An array of blacklisted attributes. Default = [].
+- **whitelist** (optional): An array of whitelisted attributes. Default = [].
+- **links** (optional): An *object* or a *function* that describes the links inside data. (If it is an object values can be string or function).
+- **topLevelMeta** (optional): An *object* or a *function* that describes the links inside data. (If it is an object values can be string or function).
+- **topLevelLinks** (optional): An *object* or a *function* that describes the links inside data. (If it is an object values can be string or function).
+- **embedded** (optional): An object defining some embedded resources
+    - *embedded*: The property in data to use as an embedded resource
+        - **type**: The type to use for serializing the embedded resource (type need to be register)
+        - **schema** (optional): A custom schema for serializing the embedded resource. If no schema define, it use the default one.
+        - **links** (optional): An *object* or a *function* that describes the links for the relationship. (If it is an object values can be string or function).
 
 ## Usage
 
@@ -77,40 +77,42 @@ var Serializer = new HALSerializer();
 // Register 'article' type
 Serializer.register('article', {
   blacklist: ['updated'], // An array of blacklisted attributes. Default = []
-  links: {
-    self: function(data) {
-      return {
+  links: function(data) { // An object or a function that describes links.
+    return {
+      self: {
         href: '/articles/' + data.id
-      };
+      }
     }
   },
   embedded: { // An object defining some embedded resources.
     author: {
       type: 'people', // The type of the embedded resource
-      links: { // Embedded links
-        href: function(data) {
-          return '/peoples/' + data.id;
+      links: function(data) {
+        return {
+          href: '/peoples/' + data.id
         }
       }
     },
     tags: {
-      type: 'tag' // The type of the resource
+      type: 'tag'
     },
     photos: {
-      type: 'photo' // The type of the resource
+      type: 'photo'
     },
     comments: {
-      type: 'comment', // The type of the resource
+      type: 'comment',
       schema: 'only-body' // A custom schema
     }
   },
-  topLevelMeta: { // An object that describe top level meta. Default = {}
-    count: function(extraOptions) { // Can be a function (with extra options argument) or a string value
-      return extraOptions.count;
+  topLevelMeta: function(extraOptions) { // An object or a function that describes top level meta.
+    return {
+      count: extraOptions.count
     }
   },
-  topLevelLinks: { // An object that describe top level links. Default = {}
-    self: '/articles' // Can be a function (with extra options argument) or a string value
+  topLevelLinks: { // An object or a function that describes top level links.
+    self: {
+      href: '/articles'
+    }
   }
 });
 
