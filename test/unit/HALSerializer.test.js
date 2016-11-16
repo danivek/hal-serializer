@@ -241,6 +241,29 @@ describe('HALSerializer', function() {
       expect(serializedEmbedded.comments[0]).to.have.property('_links').to.be.undefined;
       done();
     });
+
+    it('should return relationships with the convertCase options', function(done) {
+      const Serializer = new HALSerializer();
+      const links = {};
+      Serializer.register('author');
+      Serializer.register('articles', {
+        convertCase: 'kebab-case',
+        embedded: {
+          articleAuthor: {
+            type: 'author',
+          }
+        }
+      });
+      const included = [];
+      const serializedEmbedded = Serializer.serializeEmbedded({
+        id: '1',
+        articleAuthor: {
+          id: '1'
+        },
+      }, Serializer.schemas.articles.default, links);
+      expect(serializedEmbedded).to.have.property('article-author');
+      done();
+    });
   });
 
   describe('serializeAttributes', function() {
@@ -260,6 +283,78 @@ describe('HALSerializer', function() {
       expect(serializedAttributes).to.not.have.property('id');
       expect(serializedAttributes).to.not.have.property('title');
       expect(serializedAttributes).to.have.property('body');
+      done();
+    });
+
+    it('should convert attributes to kebab-case format', function(done) {
+      const Serializer = new HALSerializer();
+      Serializer.register('articles', {
+        convertCase: 'kebab-case'
+      });
+      const data = {
+        id: '1',
+        firstName: 'firstName',
+        lastName: 'lastName',
+        articles: [{
+          createdAt: '2016-06-04T06:09:24.864Z'
+        }],
+        address: {
+          zipCode: 123456
+        }
+      };
+      const serializedAttributes = Serializer.serializeAttributes(data, Serializer.schemas.articles.default);
+      expect(serializedAttributes).to.have.property('first-name');
+      expect(serializedAttributes).to.have.property('last-name');
+      expect(serializedAttributes.articles[0]).to.have.property('created-at');
+      expect(serializedAttributes.address).to.have.property('zip-code');
+      done();
+    });
+
+    it('should convert attributes to snake_case format', function(done) {
+      const Serializer = new HALSerializer();
+      Serializer.register('articles', {
+        convertCase: 'snake_case'
+      });
+      const data = {
+        id: '1',
+        firstName: 'firstName',
+        lastName: 'lastName',
+        articles: [{
+          createdAt: '2016-06-04T06:09:24.864Z'
+        }],
+        address: {
+          zipCode: 123456
+        }
+      };
+      const serializedAttributes = Serializer.serializeAttributes(data, Serializer.schemas.articles.default);
+      expect(serializedAttributes).to.have.property('first_name');
+      expect(serializedAttributes).to.have.property('last_name');
+      expect(serializedAttributes.articles[0]).to.have.property('created_at');
+      expect(serializedAttributes.address).to.have.property('zip_code');
+      done();
+    });
+
+    it('should convert attributes to camelCase format', function(done) {
+      const Serializer = new HALSerializer();
+      Serializer.register('articles', {
+        convertCase: 'camelCase'
+      });
+      const data = {
+        id: '1',
+        'first-name': 'firstName',
+        'last-name': 'lastName',
+        articles: [{
+          'created-at': '2016-06-04T06:09:24.864Z'
+        }],
+        address: {
+          'zip-code': 123456
+        }
+      };
+      const serializedAttributes = Serializer.serializeAttributes(data, Serializer.schemas.articles.default);
+      expect(serializedAttributes).to.have.property('firstName');
+      expect(serializedAttributes).to.have.property('lastName');
+      expect(serializedAttributes.articles[0]).to.have.property('createdAt');
+      expect(serializedAttributes.address).to.have.property('zipCode');
       done();
     });
   });
@@ -313,23 +408,10 @@ describe('HALSerializer', function() {
       }
     });
 
-    /*it('should serialize empty single data', function(done) {
-      const serializedData = Serializer.serialize('articles', {});
-      expect(serializedData).to.eql(null);
-      done();
-    });
-
-    it('should serialize empty array data', function(done) {
-      const serializedData = Serializer.serialize('articles', []);
-      expect(serializedData).to.eql([]);
-      done();
-    });
-
     it('should serialize with extra options as the third argument', function(done) {
       const serializedData = Serializer.serialize('articles', [], {
         count: 0
       });
-      expect(serializedData).to.eql([]);
       expect(serializedData).to.have.property('count').to.eql(0);
       done();
     });
@@ -337,21 +419,21 @@ describe('HALSerializer', function() {
     it('should serialize with a custom schema', function(done) {
       const Serializer = new HALSerializer();
       Serializer.register('articles', 'only-title', {
-        whitelist: ['title']
+        whitelist: ['id', 'title']
       });
 
       const data = {
         id: "1",
-        title: "JSON API paints my bikeshed!",
+        title: "Hal !",
         body: "The shortest article. Ever."
       };
 
       const serializedData = Serializer.serialize('articles', data, 'only-title');
-      expect(serializedData.data).to.have.property('id', '1');
-      expect(serializedData.data).to.have.property('title');
-      expect(serializedData.data).to.not.have.property('body');
+      expect(serializedData).to.have.property('id', '1');
+      expect(serializedData).to.have.property('title');
+      expect(serializedData).to.not.have.property('body');
       done();
-    });*/
+    });
 
     it('should throw an error if type as not been registered', function(done) {
       expect(function() {

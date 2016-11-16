@@ -31,6 +31,7 @@ Serializer.register(type, options);
         - **type**: The type to use for serializing the embedded resource (type need to be register)
         - **schema** (optional): A custom schema for serializing the embedded resource. If no schema define, it use the default one.
         - **links** (optional): An *object* or a *function* that describes the links for the relationship. (If it is an object values can be string or function).
+- **convertCase** (optional): Case conversion for serializing data. Value can be : `kebab-case`, `snake_case`, `camelCase`
 
 ## Usage
 
