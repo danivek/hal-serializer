@@ -1,6 +1,7 @@
 # hal-serializer
 [![Build Status](https://travis-ci.org/danivek/hal-serializer.svg?branch=master)](https://travis-ci.org/danivek/hal-serializer)
 [![Coverage Status](https://coveralls.io/repos/github/danivek/hal-serializer/badge.svg?branch=master)](https://coveralls.io/github/danivek/hal-serializer?branch=master)
+[![npm](https://img.shields.io/npm/v/hal-serializer.svg)](https://www.npmjs.org/package/hal-serializer)
 
 
 A Node.js framework agnostic library for serializing your data to [HAL](http://stateless.co/hal_specification.html) compliant responses (a specification for building APIs in JSON).
