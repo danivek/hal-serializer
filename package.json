@@ -1,6 +1,6 @@
 {
   "name": "hal-serializer",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Framework agnostic HAL serializer.",
   "main": "index.js",
   "scripts": {
