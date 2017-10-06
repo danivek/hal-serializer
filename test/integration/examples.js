@@ -69,7 +69,6 @@ describe('Examples', function() {
       count: 2
       })
       .then((serializedData) => {
-        console.log(JSON.stringify(serializedData));
       expect(serializedData).to.have.property('count').to.eql(2);
       expect(serializedData).to.have.property('_links').to.have.property('self').to.have.property('href').to.eql('/articles');
       expect(serializedData).to.have.property('_embedded');
