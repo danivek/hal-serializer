@@ -4,6 +4,8 @@
 const expect = require('chai').expect;
 const _ = require('lodash');
 
+const TickCounter = require('../helpers/tick-counter');
+
 const HALSerializer = require('../../');
 
 describe('HALSerializer', function() {
@@ -423,9 +425,9 @@ describe('HALSerializer', function() {
       });
 
       const data = {
-        id: "1",
-        title: "Hal !",
-        body: "The shortest article. Ever."
+        id: '1',
+        title: 'Hal !',
+        body: 'The shortest article. Ever.'
       };
 
       const serializedData = Serializer.serialize('articles', data, 'only-title');
@@ -445,6 +447,279 @@ describe('HALSerializer', function() {
     it('should throw an error if custom schema as not been registered', function(done) {
       expect(function() {
         Serializer.serialize('articles', {}, 'custom');
+      }).to.throw(Error, 'No schema custom registered for articles');
+      done();
+    });
+  });
+
+
+  describe('serializeAsync', function() {
+    const Serializer = new HALSerializer();
+    const dataArray = [{
+      id: 1,
+      title: 'Article 1',
+    }, {
+      id: 2,
+      title: 'Article 2',
+    }, {
+      id: 3,
+      title: 'Article 3',
+    }]
+
+    Serializer.register('articles', {
+      topLevelMeta: {
+        count: function(options) {
+          return options.count
+        }
+      }
+    });
+
+    it('should return a Promise', () => {
+      const promise = Serializer.serializeAsync('articles', {});
+      expect(promise).to.be.instanceOf(Promise);
+    });
+
+    it('should serialize empty array data', () =>
+      Serializer.serializeAsync('articles', [])
+        .then((serializedData) => {
+          expect(serializedData._embedded.articles).to.eql([]);
+        })
+    );
+
+    it('should serialize a single object of data', () =>
+      Serializer.serializeAsync('articles', dataArray[0])
+        .then((serializedData) => {
+          expect(serializedData).to.have.property('id').to.eql(1);
+          expect(serializedData).to.have.property('title').to.eql('Article 1');
+          expect(serializedData._embedded).to.be.undefined;
+          expect(serializedData._links).to.be.undefined;
+        })
+    );
+
+    it('should serialize an array of data', () =>
+      Serializer.serializeAsync('articles', dataArray)
+        .then((serializedData) => {
+          expect(serializedData).to.have.property('_embedded').to.have.property('articles');
+          expect(serializedData._embedded.articles).to.be.instanceof(Array).to.have.lengthOf(3);
+        })
+    );
+
+    it('should serialize each array item on next tick', () => {
+      const tickCounter = new TickCounter(5);
+      return Serializer.serializeAsync('articles', dataArray)
+        .then(() => {
+          expect(tickCounter.ticks).to.eql(4);
+        })
+    });
+
+    it('should serialize with extra options as the third argument', () => {
+      return Serializer.serializeAsync('articles', [], { count: 0 })
+        .then((serializedData) => {
+          expect(serializedData).to.have.property('count').to.eql(0);
+        });
+    });
+
+    it('should serialize with a custom schema', () => {
+      const Serializer = new HALSerializer();
+      Serializer.register('articles', 'only-title', {
+        whitelist: ['id', 'title']
+      });
+
+      const data = {
+        id: '1',
+        title: 'Hal !',
+        body: 'The shortest article. Ever.'
+      };
+
+      return Serializer.serializeAsync('articles', data, 'only-title')
+        .then((serializedData) => {
+          expect(serializedData).to.have.property('id', '1');
+          expect(serializedData).to.have.property('title');
+          expect(serializedData).to.not.have.property('body');
+        });
+    });
+
+    it('should throw an error if type has not been registered', function(done) {
+      expect(function() {
+        Serializer.serializeAsync('authors', {});
+      }).to.throw(Error, 'No type registered for authors');
+      done();
+    });
+
+    it('should throw an error if custom schema has not been registered', function(done) {
+      expect(function() {
+        Serializer.serializeAsync('articles', {}, 'custom');
+      }).to.throw(Error, 'No schema custom registered for articles');
+      done();
+    });
+  });
+
+  describe('deserialize', function() {
+    it('should deserialize data with embedded relationships', function(done) {
+      const Serializer = new HALSerializer();
+      Serializer.register('articles', {
+        embedded: {
+          author: {
+            type: 'authors'
+          },
+          comments: {
+            type: 'comments'
+          }
+        }
+      });
+      Serializer.register('authors', {});
+      Serializer.register('comments', {});
+
+      const data = {
+        id: '1',
+        title: 'Hal !',
+        body: 'The shortest article. Ever.',
+        created: '2015-05-22T14:56:29.000Z',
+        _embedded: {
+          author: {
+            _links: {
+              self: {
+                href: '/peoples/1'
+              }
+            }
+          },
+          comments: [{
+            _links: {
+              self: {
+                href: '/comments/1'
+              }
+            }
+          }, {
+            _links: {
+              self: {
+                href: '/comments/2'
+              }
+            }
+          }]
+        }
+      };
+
+      const deserializedData = Serializer.deserialize('articles', data);
+      expect(deserializedData).to.have.property('id');
+      expect(deserializedData).to.have.property('title');
+      expect(deserializedData).to.have.property('body');
+      expect(deserializedData).to.have.property('created');
+      expect(deserializedData).to.have.property('author', '1');
+      expect(deserializedData).to.have.property('comments').to.be.instanceof(Array).to.eql(['1', '2']);
+      done();
+    });
+
+    it('should deserialize data with full embedded relationships', function(done) {
+      const Serializer = new HALSerializer();
+      Serializer.register('articles', {
+        embedded: {
+          author: {
+            type: 'authors'
+          },
+          comments: {
+            type: 'comments'
+          }
+        }
+      });
+      Serializer.register('authors', {});
+      Serializer.register('comments', {});
+
+      const data = {
+        id: '1',
+        title: 'Hal !',
+        body: 'The shortest article. Ever.',
+        created: '2015-05-22T14:56:29.000Z',
+        _embedded: {
+          author: {
+            _links: {
+              self: {
+                href: '/peoples/1'
+              }
+            },
+            firstName: 'Kaley',
+            lastName: 'Maggio',
+            email: 'Kaley-Maggio@example.com',
+            age: '80',
+            gender: 'male'
+          },
+          comments: [{
+            _links: {
+              self: {
+                href: '/comments/1'
+              }
+            },
+            body: 'First !'
+          }, {
+            _links: {
+              self: {
+                href: '/comments/2'
+              }
+            },
+            body: 'I Like !'
+          }]
+        }
+      }
+
+      const deserializedData = Serializer.deserialize('articles', data);
+      expect(deserializedData).to.have.property('id');
+      expect(deserializedData).to.have.property('title');
+      expect(deserializedData).to.have.property('body');
+      expect(deserializedData).to.have.property('created');
+      expect(deserializedData).to.have.property('author').to.deep.equal({
+        firstName: 'Kaley',
+        lastName: 'Maggio',
+        email: 'Kaley-Maggio@example.com',
+        age: '80',
+        gender: 'male'
+      });
+      expect(deserializedData).to.have.property('comments').to.be.instanceof(Array);
+      expect(deserializedData.comments[0]).to.deep.equal({
+        body: 'First !'
+      });
+      expect(deserializedData.comments[1]).to.deep.equal({
+        body: 'I Like !'
+      });
+      done();
+    });
+
+    it('should deserialize an array of data', function(done) {
+      const Serializer = new HALSerializer();
+      Serializer.register('articles', {});
+
+      const data = {
+        _embedded: {
+          articles: [{
+            id: '1',
+            title: 'Hal !',
+            body: 'The shortest article. Ever.',
+            created: '2015-05-22T14:56:29.000Z'
+          }, {
+            id: '2',
+            title: 'Hal again !',
+            body: 'The second shortest article. Ever.',
+            created: '2015-06-22T14:56:29.000Z'
+          }]
+        }
+      };
+
+      const deserializedData = Serializer.deserialize('articles', data);
+      expect(deserializedData).to.have.length(2);
+      done();
+    });
+
+    it('should throw an error if type has not been registered', function(done) {
+      expect(function() {
+        const Serializer = new HALSerializer();
+        Serializer.deserialize('authors', {});
+      }).to.throw(Error, 'No type registered for authors');
+      done();
+    });
+
+    it('should throw an error if custom schema has not been registered', function(done) {
+      expect(function() {
+        const Serializer = new HALSerializer();
+        Serializer.register('articles', {});
+        Serializer.deserialize('articles', {}, 'custom');
       }).to.throw(Error, 'No schema custom registered for articles');
       done();
     });

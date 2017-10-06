@@ -144,7 +144,14 @@ Serializer.register('comment', 'only-body', {
 Serialize it with the corresponding resource type, data and optional extra options :
 
 ```javascript
+// Synchronously (blocking)
 Serializer.serialize('article', data, {count: 2});
+
+// Asynchronously (non-blocking)
+Serializer.serializeAsync('article', data, {count: 2})
+  .then((result) => {
+    ...
+  });
 ```
 
 The output data will be :
@@ -192,6 +199,61 @@ The output data will be :
 }
 ```
 
+### Deserialize
+
+input data (can be an simple object or an array of objects)
+
+```javascript
+var data = {
+  _links: {
+    self: {
+      href: '/articles/1'
+    },
+    author: {
+      href: '/peoples/1'
+    }
+  },
+  id: '1',
+  title: 'HAL Hypertext Application Language',
+  body: 'The shortest article. Ever.',
+  created: '2015-05-22T14:56:29.000Z',
+  _embedded: {
+    author: {
+      _links: {
+        self: {
+          href: '/peoples/1'
+        }
+      },
+      id: '1',
+      firstName: 'Kaley',
+      lastName: 'Maggio',
+      email: 'Kaley-Maggio@example.com',
+      age: '80',
+      gender: 'male'
+    }
+  }
+};
+
+Serializer.deserialize('article', data);
+```
+
+```JSON
+{
+  "id": "1",
+  "title": "HAL Hypertext Application Language",
+  "body": "The shortest article. Ever.",
+  "created": "2015-05-22T14:56:29.000Z",
+  "author": {
+    "id": "1",
+    "firstName": "Kaley",
+    "lastName": "Maggio",
+    "email": "Kaley-Maggio@example.com",
+    "age": "80",
+    "gender": "male"
+  }
+}
+```
+
 ## Custom schemas
 
 It is possible to define multiple custom schemas for a resource type :
@@ -212,8 +274,8 @@ Example :
 ```javascript
 embedded: {
   comments: {
-  type: 'comment'
-  schema: 'customSchema'
+    type: 'comment'
+    schema: 'customSchema'
   }
 }
 ```
